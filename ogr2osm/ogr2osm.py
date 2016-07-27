@@ -641,15 +641,19 @@ def output():
         f.write('</osm>')
 
 
-# Main flow
-data = openData(source)
-parseData(data)
-mergePoints()
-mergeWayPoints()
-translations.preOutputTransform(Geometry.geometries, Feature.features)
-output()
-if options.saveid:
-    with open(options.saveid, 'w') as ff:
-        ff.write(str(Geometry.elementIdCounter))
-    l.info("Wrote elementIdCounter '%d' to file '%s'"
-        % (Geometry.elementIdCounter, options.saveid))
+def main():
+    data = openData(source)
+    parseData(data)
+    mergePoints()
+    mergeWayPoints()
+    translations.preOutputTransform(Geometry.geometries, Feature.features)
+    output()
+    if options.saveid:
+        with open(options.saveid, 'w') as ff:
+            ff.write(str(Geometry.elementIdCounter))
+        l.info("Wrote elementIdCounter '%d' to file '%s'"
+            % (Geometry.elementIdCounter, options.saveid))
+
+
+if __name__ == '__main__':
+    main()
