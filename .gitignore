@@ -9,4 +9,5 @@
 *.PRJ
 *.DBF
 .DS_Store
+*.t.err
 .idea/
