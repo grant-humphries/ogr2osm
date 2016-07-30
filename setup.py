@@ -12,7 +12,13 @@ setup(
             'ogr2osm = ogr2osm.ogr2osm:main'
         ]
     },
-    extras_require=dict(test=['cram>=0.7']),
+    extras_require=dict(
+        test=[
+            'cram>=0.7',
+            'lxml>=3.4.4'
+        ],
+        speed=['lxml>=3.4.4']
+    ),
     install_requires=['gdal>=1.10.0'],
     license='Beerware/MIT',
     long_description=open('Readme.md').read(),

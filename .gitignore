@@ -8,6 +8,6 @@
 *.SHX
 *.PRJ
 *.DBF
-.DS_Store
 *.t.err
+.DS_Store
 .idea/
