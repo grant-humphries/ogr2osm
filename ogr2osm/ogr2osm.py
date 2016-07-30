@@ -51,7 +51,7 @@ l.basicConfig(level=l.DEBUG, format="%(message)s")
 
 from osgeo import ogr
 from osgeo import osr
-from geom import *
+from .geom import *
 
 
 '''
