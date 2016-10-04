@@ -47,48 +47,16 @@ import os
 import optparse
 import logging as l
 import re
-l.basicConfig(level=l.DEBUG, format="%(message)s")
 
 from osgeo import ogr
 from osgeo import osr
-from geom import *
+from ogr2osm.geom import *
 
 # Determine major Python version is 2 or 3
 IS_PYTHON2 = sys.version_info < (3, 0)
 
-'''
-
-See http://lxml.de/tutorial.html for the source of the includes
-
-lxml should be the fastest method
-
-'''
-
-try:
-    from lxml import etree
-    l.debug("running with lxml.etree")
-except ImportError:
-    try:
-        # Python 2.5
-        import xml.etree.ElementTree as etree
-        l.debug("running with ElementTree on Python 2.5+")
-    except ImportError:
-        try:
-            # normal cElementTree install
-            import cElementTree as etree
-            l.debug("running with cElementTree")
-        except ImportError:
-            try:
-                # normal ElementTree install
-                import elementtree.ElementTree as etree
-                l.debug("running with ElementTree")
-            except ImportError:
-                l.error("Failed to import ElementTree from any known place")
-                raise
-
-
 # Setup program usage
-usage = """%prog SRCFILE
+usage = """%prog [OPTIONS] SRCFILE
 
 SRCFILE can be a file path or a org PostgreSQL connection string such as:
 "PG:dbname=pdx_bldgs user=emma host=localhost" (including the quotes)"""
@@ -106,7 +74,10 @@ parser.add_option("-e", "--epsg", dest="sourceEPSG", metavar="EPSG_CODE",
 parser.add_option("-p", "--proj4", dest="sourcePROJ4", metavar="PROJ4_STRING",
                   help="PROJ.4 string. If specified, overrides projection " +
                        "from source metadata if it exists.")
-parser.add_option("-v", "--verbose", dest="verbose", action="store_true")
+parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
+                  help="Display all explanatory messages.")
+parser.add_option("-q", "--quiet", dest="quiet", action="store_true",
+                  help="Run quietly (limit messages displayed).")
 parser.add_option("-d", "--debug-tags", dest="debugTags", action="store_true",
                   help="Output the tags for every feature parsed.")
 parser.add_option("-f", "--force", dest="forceOverwrite", action="store_true",
@@ -126,7 +97,7 @@ parser.add_option("--no-memory-copy", dest="noMemoryCopy", action="store_true",
                     help="Do not make an in-memory working copy")
 
 parser.add_option("--no-upload-false", dest="noUploadFalse", action="store_true",
-                    help="Omit upload=false from the completed file to surpress JOSM warnings when uploading.")
+                    help="Omit upload=false from the completed file to suppress JOSM warnings when uploading.")
 
 parser.add_option("--id", dest="id", type=int, default=0,
                     help="ID to start counting from for the output file. Defaults to 0.")
@@ -153,17 +124,25 @@ parser.add_option("--sql", dest="sqlQuery", type=str, default=None,
                      help="SQL query to execute on a PostgreSQL source")
 
 parser.set_defaults(sourceEPSG=None, sourcePROJ4=None, verbose=False,
-                    debugTags=False,
-                    translationMethod=None, outputFile=None,
-                    forceOverwrite=False, noUploadFalse=False)
+                    quiet=False, debugTags=False, translationMethod=None,
+                    outputFile=None, forceOverwrite=False, noUploadFalse=False)
 
 # Parse and process arguments
 (options, args) = parser.parse_args()
 
+if options.verbose:
+    log_level = l.DEBUG
+elif options.quiet:
+    log_level = l.WARNING
+else:
+    log_level = l.INFO
+
+l.basicConfig(level=log_level, format="%(message)s")
+
 try:
     if options.sourceEPSG:
         options.sourceEPSG = int(options.sourceEPSG)
-except:
+except ValueError:
     parser.error("EPSG code must be numeric (e.g. '4326', not 'epsg:4326')")
 
 if len(args) < 1:
@@ -264,7 +243,7 @@ if options.idfile:
         % (Geometry.elementIdCounter, options.idfile))
 
 if options.positiveID:
-    Geometry.elementIdCounterIncr = 1 # default is -1
+    Geometry.elementIdCounterIncr = 1  # default is -1
 
 def openData(source):
     if re.match('^PG:', source):
@@ -569,6 +548,8 @@ def mergeWayPoints():
             way.points = merged_points
 
 def output():
+    etree = importXmlParser()
+
     l.debug("Outputting XML")
     # First, set up a few data structures for optimization purposes
     nodes = [geom for geom in Geometry.geometries if type(geom) == Point]
@@ -652,6 +633,36 @@ def output():
             f.write('\n')
 
         f.write('</osm>')
+
+def importXmlParser():
+    '''
+    See http://lxml.de/tutorial.html for the source of the includes
+    lxml should be the fastest method
+    '''
+
+    try:
+        from lxml import etree
+        l.debug("running with lxml.etree")
+    except ImportError:
+        try:
+            # Python 2.5
+            import xml.etree.ElementTree as etree
+            l.debug("running with ElementTree on Python 2.5+")
+        except ImportError:
+            try:
+                # normal cElementTree install
+                import cElementTree as etree
+                l.debug("running with cElementTree")
+            except ImportError:
+                try:
+                    # normal ElementTree install
+                    import elementtree.ElementTree as etree
+                    l.debug("running with ElementTree")
+                except ImportError:
+                    l.error("Failed to import ElementTree from any known place")
+                    raise
+
+    return etree
 
 
 def main():

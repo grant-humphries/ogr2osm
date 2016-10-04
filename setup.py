@@ -9,7 +9,7 @@ setup(
                 'into .osm data',
     entry_points={
         'console_scripts': [
-            'ogr2osm = ogr2osm.ogr2osm:main'
+            'ogr2osm = ogr2osm.main:main'
         ]
     },
     extras_require=dict(
