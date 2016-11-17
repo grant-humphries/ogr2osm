@@ -9,5 +9,14 @@
 *.PRJ
 *.DBF
 *.t.err
+
 .DS_Store
 .idea/
+temp/
+
+# buildout files
+.installed.cfg
+bin/
+develop-eggs/
+eggs/
+*.egg-info/
